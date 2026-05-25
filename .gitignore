@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.vite/
+out/
+coverage/
+.DS_Store
+*.log
+
+# Temp / runtime artifacts
+.tmp/
+packages/desktop/reports/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+hexstrike-ai/hexstrike-env/

@@ -1,0 +1,18 @@
+{
+  "name": "@hexguard/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "echo shared-types-ok",
+    "typecheck": "echo shared-types-ok"
+  }
+}

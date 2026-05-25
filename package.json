@@ -1,0 +1,21 @@
+{
+  "name": "hexguard-hunt",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.8.0",
+  "scripts": {
+    "dev": "pnpm --filter @hexguard/desktop build && concurrently -k -p \"[{name}]\" -n vite,electron \"pnpm --filter @hexguard/renderer exec vite --host 127.0.0.1 --port 5173\" \"wait-on tcp:5173 && VITE_DEV_SERVER_URL=http://127.0.0.1:5173 pnpm --filter @hexguard/desktop exec electron dist/main/index.js\"",
+    "dev:renderer": "pnpm --filter @hexguard/renderer dev",
+    "dev:desktop": "pnpm --filter @hexguard/desktop dev",
+    "dev:linux": "./scripts/start-desktop-linux.sh",
+    "backend:start": "./scripts/start-hexstrike-backend.sh",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3",
+    "wait-on": "^8.0.3"
+  }
+}
