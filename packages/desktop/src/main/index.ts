@@ -546,10 +546,21 @@ function registerHandlers(win: BrowserWindow): void {
       }
     }
 
+    // Build conversation history: all prior real turns in this session,
+    // excluding error/quota messages (those are local-only), capped at 40
+    // entries (~20 exchanges) to stay within Gemini token limits.
+    const MAX_HISTORY = 40;
+    const history = s.messages
+      .slice(0, -1)  // exclude the user message we just pushed
+      .filter(m => (m.role === "user" || m.role === "assistant") && m.kind !== "quota" && m.kind !== "error")
+      .slice(-MAX_HISTORY)
+      .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+
     const res = await askHexStrike({
       ...req,
       projectId: s.projectId ?? null,
       knowledgeContext,
+      history,
     });
     s.messages.push(res.message);
     s.updatedAt = nowIso();

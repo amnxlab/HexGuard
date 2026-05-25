@@ -107,11 +107,20 @@ export interface RagSearchRequest {
 
 // ─── Ask ──────────────────────────────────────────────────────────────────────
 
+/** A single prior conversation turn sent to the AI backend. */
+export interface HistoryTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface AskRequest {
   sessionId: string;
   prompt: string;
   projectId?: string | null;
   knowledgeContext?: string;
+  /** Prior conversation turns before the current prompt.
+   *  Backend uses these to build a multi-turn Gemini contents array. */
+  history?: HistoryTurn[];
 }
 
 export interface AskResponse {

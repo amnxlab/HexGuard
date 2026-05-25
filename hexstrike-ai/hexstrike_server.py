@@ -9083,12 +9083,16 @@ GEMINI_FREE_MODELS = [
     "gemini-1.5-pro",
 ]
 
-def _call_gemini(api_key: str, model: str, prompt: str, session_id: str = ""):
+def _call_gemini(api_key: str, model: str, prompt: str, session_id: str = "", history=None):
     """Call the Gemini REST API with model fallback chain.
 
     Tries the requested model first, then falls back through GEMINI_FREE_MODELS
     on 404 (model unavailable) or 429 (rate limited).  Re-raises immediately on
     any other HTTP error.  Returns (response_text, model_used).
+
+    `history` is an optional list of prior {"role": "user"|"assistant", "content": str}
+    dicts that are converted to Gemini's multi-turn contents format so the model
+    retains context across chat turns.
     """
     if model not in GEMINI_FREE_MODELS:
         model = GEMINI_FREE_MODELS[0]
@@ -9096,9 +9100,20 @@ def _call_gemini(api_key: str, model: str, prompt: str, session_id: str = ""):
     # Build fallback order: preferred model first, then the rest
     fallback_order = [model] + [m for m in GEMINI_FREE_MODELS if m != model]
 
+    # Build multi-turn contents array from history + current prompt.
+    # Gemini roles are "user" and "model" (not "assistant").
+    contents = []
+    for turn in (history or []):
+        gemini_role = "user" if turn.get("role") == "user" else "model"
+        text = str(turn.get("content", "")).strip()
+        if text:  # skip empty turns that could cause API errors
+            contents.append({"role": gemini_role, "parts": [{"text": text}]})
+    # Append the current user prompt as the final turn
+    contents.append({"role": "user", "parts": [{"text": prompt}]})
+
     payload_base = {
         "system_instruction": {"parts": [{"text": HEXSTRIKE_SYSTEM_PROMPT}]},
-        "contents": [{"role": "user", "parts": [{"text": f"[Session: {session_id}]\n\n{prompt}"}]}],
+        "contents": contents,
         "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2048, "topP": 0.9},
         "safetySettings": [
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
@@ -9148,6 +9163,10 @@ def ask_hexstrike():
         session_id = str(data.get("sessionId", ""))
         model = str(data.get("model", "gemini-2.0-flash"))
         knowledge_context = str(data.get("knowledge_context", "")).strip()
+        # history: list of {"role": "user"|"assistant", "content": str} from the client
+        history = data.get("history", [])
+        if not isinstance(history, list):
+            history = []
 
         if not prompt:
             return jsonify({"error": "prompt is required"}), 400
@@ -9186,7 +9205,7 @@ def ask_hexstrike():
                 f"{prompt}"
             )
 
-        response_text, model_used = _call_gemini(api_key, model, final_prompt, session_id)
+        response_text, model_used = _call_gemini(api_key, model, final_prompt, session_id, history)
         return jsonify({"content": response_text, "model": model_used})
 
     except ValueError as ve:

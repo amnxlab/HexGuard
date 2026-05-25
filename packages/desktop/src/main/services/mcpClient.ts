@@ -399,6 +399,7 @@ async function askHexStrikeDetailed(
       sessionId: request.sessionId,
       projectId: request.projectId,
       knowledge_context: request.knowledgeContext,
+      history: request.history ?? [],
       model,
     },
     20_000,
